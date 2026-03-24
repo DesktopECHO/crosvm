@@ -23,14 +23,14 @@ packages:
   - binutils
   - e2fsprogs
   - gcc
-  - ffmpeg-free-libs
+  - libavcodec-free       # ffmpeg runtime codec library
   - libcap
   - dbus-libs
   - libdrm
-  - libepoxy
+  - libepoxy              # epoxy runtime library
   - openssl-libs
   - libva
-  - wayland-libs-client
+  - libwayland-client     # Wayland client runtime library
   - libX11
   - libXext
   - nasm

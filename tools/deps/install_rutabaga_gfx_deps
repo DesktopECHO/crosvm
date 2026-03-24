@@ -23,9 +23,9 @@ sudo dnf install --assumeyes \
 DEPS_DIR=$(mktemp -d)
 cd "${DEPS_DIR}"
 
+# Fedora aarch64 uses /usr/lib64, not the Debian multiarch path /usr/lib/aarch64-linux-gnu
 COMMON_PREFIX=/usr
-AARCH64_DIR=aarch64-linux-gnu
-AARCH64_LIBDIR="${COMMON_PREFIX}/lib/${AARCH64_DIR}"
+AARCH64_LIBDIR="${COMMON_PREFIX}/lib64"
 
 # minigbm
 git clone https://chromium.googlesource.com/chromiumos/platform/minigbm
@@ -34,7 +34,7 @@ git checkout b1fccad660ff4034f186d68b6474e3139e2dc4db
 
 sudo make install \
     DESTDIR="${COMMON_PREFIX}" \
-    LIBDIR=/lib/"${AARCH64_DIR}" \
+    LIBDIR=/lib64 \
     INCLUDEDIR=/include \
     OUT=out
 cd ..
