@@ -42,9 +42,6 @@ vm_memory = { workspace = true }
 minijail = "*"
 power_monitor = { workspace = true }
 
-[target.'cfg(windows)'.dependencies]
-winapi = "0.3"
-
 [dev-dependencies]
 serde_json = { workspace = true }
 tempfile = "3"

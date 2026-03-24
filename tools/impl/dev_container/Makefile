@@ -1,38 +1,41 @@
-# Copyright 2021 The ChromiumOS Authors
+# Copyright 2025 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+#
+# Builds the crosvm dev container for Asahi Fedora Remix (aarch64).
 
-export DOCKER_BUILDKIT=1
+TOOLS_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+CROSVM_ROOT := $(shell realpath $(TOOLS_DIR)/../../../)
 
-TAG_BASE=gcr.io/crosvm-infra
-VERSION=$(shell cat version)
-BASE_VERSION=$(shell cat base_version)
-BUILD_CONTEXT=$(shell realpath ../../../)
+BASE_VERSION := $(shell cat $(TOOLS_DIR)/base_version)
+VERSION := $(shell cat $(TOOLS_DIR)/version)
 
-DOCKER ?= podman
+BASE_IMAGE := gcr.io/crosvm-infra/crosvm_dev_base_asahi
+DEV_IMAGE  := gcr.io/crosvm-infra/crosvm_dev_asahi
 
-crosvm_dev:
-	$(DOCKER) pull $(TAG_BASE)/crosvm_dev_base:$(BASE_VERSION)
-	$(DOCKER) build \
-		-t $(TAG_BASE)/$@:$(VERSION) \
-		-f Dockerfile \
+.PHONY: base dev upload_base upload_dev
+
+base:
+	docker build \
+		--platform linux/arm64 \
+		-f $(TOOLS_DIR)/Dockerfile.base \
+		-t $(BASE_IMAGE):$(BASE_VERSION) \
+		-t $(BASE_IMAGE):latest \
+		$(CROSVM_ROOT)
+
+dev: base
+	docker build \
+		--platform linux/arm64 \
 		--build-arg BASE_VERSION=$(BASE_VERSION) \
-		$(BUILD_CONTEXT)
-	$(DOCKER) tag $(TAG_BASE)/$@:$(VERSION) $(TAG_BASE)/$@:latest
+		-f $(TOOLS_DIR)/Dockerfile \
+		-t $(DEV_IMAGE):$(VERSION) \
+		-t $(DEV_IMAGE):latest \
+		$(CROSVM_ROOT)
 
-upload_dev: crosvm_dev
-	$(DOCKER) push $(TAG_BASE)/crosvm_dev:$(VERSION)
-	$(DOCKER) push $(TAG_BASE)/crosvm_dev:latest
+upload_base: base
+	docker push $(BASE_IMAGE):$(BASE_VERSION)
+	docker push $(BASE_IMAGE):latest
 
-crosvm_dev_base:
-	$(DOCKER) build \
-		-t $(TAG_BASE)/$@:$(BASE_VERSION) \
-		-f Dockerfile.base \
-		$(BUILD_CONTEXT)
-	$(DOCKER) tag $(TAG_BASE)/$@:$(BASE_VERSION) $(TAG_BASE)/$@:latest
-
-upload_base: crosvm_dev_base
-	$(DOCKER) push $(TAG_BASE)/crosvm_dev_base:$(BASE_VERSION)
-	$(DOCKER) push $(TAG_BASE)/crosvm_dev_base:latest
-
-.PHONY: all crosvm_dev crosvm_dev_base upload_dev upload_base
+upload_dev: dev
+	docker push $(DEV_IMAGE):$(VERSION)
+	docker push $(DEV_IMAGE):latest

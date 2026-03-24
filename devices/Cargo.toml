@@ -9,10 +9,6 @@ android_display = ["gpu_display/android_display"]
 android_display_stub = ["gpu_display/android_display_stub"]
 arc_quota = ["dbus", "protobuf", "system_api", "fs_permission_translation"]
 fs_runtime_ugid_map = ["fs_permission_translation"]
-# Allow intercepting incoming virtio-fs requests to modify its permission, UID or GID.
-#
-# This feature is not supposed to be specified directly. Instead, this will be automatically
-# enabled when either `arc_quota` or `fs_runtime_ugid_map` is enabled.
 fs_permission_translation = []
 audio = []
 audio_aaudio = []
@@ -120,13 +116,6 @@ vhost = { workspace = true }
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 aarch64_sys_reg = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-proc_init = { workspace = true }
-tube_transporter = { path = "../tube_transporter" }
-win_audio = { path = "../win_audio"}
-win_util = { path = "../win_util"}
-winapi = "0.3"
 
 [dependencies.futures]
 version = "0.3"

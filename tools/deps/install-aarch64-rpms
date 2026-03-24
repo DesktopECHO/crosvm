@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Installs all native aarch64 build dependencies on Asahi Fedora Remix.
+# Replaces the Debian-specific install-x86_64-debs / install-aarch64-debs scripts.
+
+set -ex
+
+sudo dnf install --assumeyes \
+    binutils \
+    ca-certificates \
+    clang \
+    clang-devel \
+    cloud-utils \
+    curl \
+    dbus-devel \
+    expect \
+    ffmpeg-free-devel \
+    gcc \
+    gcc-c++ \
+    git \
+    glib2-devel \
+    guestfs-tools \
+    jq \
+    libcap-devel \
+    libdrm-devel \
+    libepoxy-devel \
+    libslirp-devel \
+    libva-devel \
+    libXext-devel \
+    lld \
+    make \
+    meson \
+    nasm \
+    ninja-build \
+    nmap-ncat \
+    openssl-devel \
+    openssh-clients \
+    pipx \
+    pkgconf \
+    pkgconf-pkg-config \
+    protobuf-compiler \
+    python3 \
+    black \
+    python3-mypy \
+    python3-pip \
+    python3-rich \
+    qemu-img \
+    qemu-system-aarch64 \
+    rsync \
+    screen \
+    strace \
+    tmux \
+    wayland-devel \
+    wayland-protocols-devel \
+    wget
+
+# edk2-aarch64 provides QEMU_EFI.fd for aarch64 VM boot
+sudo dnf install --assumeyes edk2-aarch64 || true

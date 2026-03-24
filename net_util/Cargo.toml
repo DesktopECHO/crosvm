@@ -26,10 +26,6 @@ zerocopy = { version = "0.8.13", features = ["derive"] }
 
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
 net_sys = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-metrics = { workspace = true }
-winapi = { version = "0.3", features = ["everything", "std", "impl-default"] }
 libslirp-sys = { version = "4.2.1", optional = true }
 
 [build-dependencies]

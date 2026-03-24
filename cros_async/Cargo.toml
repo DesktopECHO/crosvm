@@ -30,11 +30,6 @@ tokio = { workspace = true, optional = true }
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
 io_uring = { workspace = true }
 
-[target.'cfg(windows)'.dependencies]
-winapi = "0.3"
-win_util = { path = "../win_util" }
-smallvec = "1"
-
 [dependencies.futures]
 version = "0.3"
 default-features = false

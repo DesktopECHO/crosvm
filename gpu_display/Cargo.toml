@@ -7,12 +7,8 @@ edition = "2021"
 [features]
 x = []
 kiwi = []
-vulkan_display = [ "vulkano", "ash", "rand", "protos", "protobuf", "euclid", "smallvec"]
-# Enables the GPU display backend for Android. The backend uses Android surface as the backing
-# store.
+vulkan_display = ["vulkano", "ash", "rand", "protos", "protobuf", "euclid", "smallvec"]
 android_display = []
-# Stub implementation of the Android display backend. This is only used for building and testing the
-# Android display backend on a non-Android target
 android_display_stub = []
 gfxstream_display = []
 
@@ -36,16 +32,6 @@ euclid = { version = "0.22", optional = true }
 smallvec = { version = "1", optional = true }
 sync = { workspace = true }
 rutabaga_gfx = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-cros_tracing = { workspace = true }
-metrics = { workspace = true }
-num-traits = "0.2"
-winapi = "0.3"
-win_util = { path = "../win_util" }
-smallvec = "1"
-sync = { workspace = true }
-euclid = "0.22"
 
 [build-dependencies]
 cc = "1.0.25"

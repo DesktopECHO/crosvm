@@ -33,9 +33,6 @@ vm_memory = { workspace = true }
 zerocopy = { version = "0.8.13", features = ["derive"] }
 zstd = { version = "0.13", optional = true }
 
-[target.'cfg(windows)'.dependencies]
-winapi = "0.3"
-
 [dependencies.futures]
 version = "0.3"
 default-features = false

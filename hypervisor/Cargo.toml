@@ -39,21 +39,3 @@ kvm_sys = { workspace = true }
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 aarch64_sys_reg = { workspace = true }
-
-[target.'cfg(target_arch = "x86_64")'.dev-dependencies]
-hypervisor_test_macro = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-thiserror = { workspace = true }
-winapi = "0.3"
-win_util = { path = "../win_util" }
-
-[target.'cfg(windows)'.dependencies.windows]
-workspace = true
-features = [
-    "Win32_Foundation",
-    "Win32_System_Memory",
-]
-
-[target.'cfg(windows)'.dev-dependencies]
-tempfile = "3"

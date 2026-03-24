@@ -1,28 +1,24 @@
 # syntax=docker/dockerfile:1.11.1
-# Copyright 2021 The ChromiumOS Authors
+# Copyright 2025 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+#
+# Development container for crosvm on Asahi Fedora Remix (aarch64).
+# Provides all dependencies for native aarch64 builds only.
+# Windows, riscv64, and x86_64 cross-compilation paths have been removed.
+#
+# See Makefile for build instructions.
 
-# Development container for crosvm.
-#
-# Provides all dependencies specified in tools/deps/* with some additonal
-# logic to cache cargo data in CI runs.
-#
-# Uses the crosvm_dev_base image built by Dockerfile.base
-#
-# See Makefile for build instructions
-
-# Global arg must be before any build stages
 ARG BASE_VERSION
 
-# Build catapult dashboard upload tool in a builder container
-FROM docker.io/golang:bullseye AS gobuilder
+# Build catapult dashboard upload tool
+FROM docker.io/golang:latest AS gobuilder
 WORKDIR /root/
 RUN git clone https://fuchsia.googlesource.com/infra/infra
 WORKDIR /root/infra/cmd/catapult
 RUN go build
 
-FROM gcr.io/crosvm-infra/crosvm_dev_base:${BASE_VERSION}
+FROM gcr.io/crosvm-infra/crosvm_dev_base_asahi:${BASE_VERSION}
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -40,33 +36,25 @@ RUN mkdir -p /scratch/cargo_target \
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV CARGO_TARGET_DIR=/scratch/cargo_target
 
-# Allow APT to cache packages between docker image builds
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+# Allow DNF to cache packages between docker image builds
+RUN echo 'keepcache=True' >> /etc/dnf/dnf.conf
 
-# Add wine64 to PATH, as debian removed alternative entry to wine64
-ENV PATH=/usr/lib/wine:$PATH
-
-# Install non-debian dependencies. Debian packages are installed in the base image in Dockefile.base
+# Install non-RPM dependencies (Rust toolchain, cargo tools, mdformat)
 COPY --chmod=555 \
-    tools/deps/install-x86_64-other \
     tools/deps/install-aarch64-other \
-    tools/deps/install-mingw64-other \
-    tools/deps/install-riscv64-other \
     tools/deps/install_rutabaga_gfx_deps \
     rust-toolchain \
     /tools/deps/
+
 RUN cd /tools/deps \
-    && ./install-x86_64-other \
     && ./install-aarch64-other \
-    && ./install-mingw64-other \
-    && ./install-riscv64-other \
     && ./install_rutabaga_gfx_deps \
-    # We only use the nightly toolchain for rustfmt, remove other parts to save space.
+    # We only use the nightly toolchain for rustfmt; remove other parts to save space.
     && rustup component remove --toolchain nightly rust-std \
     && rustup component remove --toolchain nightly cargo
 
-# Install global config.toml for cross-compilation
-COPY --chmod=555 .cargo/config.debian.toml /.cargo/config.toml
+# Install cargo config for native aarch64
+COPY --chmod=444 .cargo/config.toml /.cargo/config.toml
 
 # Install catapult dashboard upload tool
 COPY --from=gobuilder /root/infra/cmd/catapult/catapult /tools/

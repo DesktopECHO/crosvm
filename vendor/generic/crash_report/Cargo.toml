@@ -12,6 +12,3 @@ perfetto-system-backend = []
 anyhow = { workspace = true }
 base = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-
-[target.'cfg(windows)'.dependencies]
-win_util = { path = "../../../win_util" }

@@ -1,55 +1,52 @@
-# Dev Container
+# Dev Container (Asahi Fedora Remix)
 
-This directory contains the dev container used by developers locally as well as the crosvm CI
-infrastructure.
+This directory contains the dev container for crosvm on **Asahi Fedora Remix (aarch64)**.
 
-The container is split into two, `crosvm_dev` defined by `tools/impl/dev_container/Dockerfile` and
-`crosvm_dev_base` defined by `tools/impl/dev_container/Dockerfile.base`.
+The container is split into two images:
 
-## Base image `crosvm_dev_base`
+- **`crosvm_dev_base_asahi`** — defined by `Dockerfile.base`
+  Installs all RPM packages via `tools/deps/install-aarch64-rpms`.
+  Update infrequently; only when RPM packages change.
 
-The `Dockerfile.base` image contains a plain debian image with only debian packages from
-`tools/deps/install-*-debs` installed. Since we track debian testing, new packages can come with new
-problems and that image should not be updated very often.
+- **`crosvm_dev_asahi`** — defined by `Dockerfile`
+  Builds on top of the base image and installs Rust toolchains, cargo tools,
+  and rutabaga_gfx dependencies.
 
-To make changes to those debian packages, modify the install scripts and uprev the
-`tools/impl/dev_container/base_version` file. Then rebuild the container with:
+## Updating the base image
 
-```
-make -C tools/impl/dev_container crosvm_dev_base
-```
+Modify `tools/deps/install-aarch64-rpms`, uprev `base_version`, then:
 
-To rebuild the dev container using the new base image, upload the base image first before going to
-the next section:
-
-```
+```bash
+make -C tools/impl/dev_container base
+# Test locally with: ./tools/dev_container
+# When satisfied, upload:
 make -C tools/impl/dev_container upload_base
 ```
 
-Note that you need to be a Googler to be able to upload containers. See go/crosvm/infra for access
-control and authenticate via:
+## Updating the dev image
 
+Modify the relevant install scripts, uprev `version`, then:
+
+```bash
+make -C tools/impl/dev_container dev
+# Stop any running container first:
+./tools/dev_container --stop
+# Test locally:
+./tools/dev_container
+# Upload:
+make -C tools/impl/dev_container upload_dev
 ```
+
+## Authentication
+
+You need to be a Googler to upload containers. Authenticate via:
+
+```bash
 gcloud auth configure-docker gcr.io
 ```
 
-## Dev container image `crosvm_dev`
+## Notes
 
-The `Dockerfile` builds the dev container on top of `crosvm_dev_base`, so we are free to uprev
-tooling without having to pull in new debian packages.
-
-To make changes to `crosvm_dev`, modify the corresponding install scripts and uprev the
-`tools/impl/dev_container/version` file. Then rebuild the container with:
-
-```
-make -C tools/impl/dev_container crosvm_dev
-```
-
-This will make the image available for testing locally with `tools/dev_container`. You may have to
-stop the previous container to pick up the new image `tools/dev_container --stop`.
-
-To upload the new version of the dev container run:
-
-```
-make -C tools/impl/dev_container upload_dev
-```
+- The container targets `linux/arm64` only. There is no x86_64 or riscv64 variant.
+- The Golang builder stage uses `docker.io/golang:latest` (multi-arch, resolves to arm64).
+- All Debian/apt-get references have been replaced with Fedora/dnf equivalents.

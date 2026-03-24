@@ -1,85 +1,69 @@
-# Copyright 2021 The ChromiumOS Authors
+# Copyright 2025 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Builds the base image for test VMs used by ./tools/x86vm and
-# ./tools/aarch64vm.
+# Builds the aarch64 test VM image for Asahi Fedora Remix.
+# x86_64 paths and Debian image sources have been removed.
 #
 # To build and upload a new base image, uprev the version in the `version` file
 # and run:
+#   make upload
 #
-#   make ARCH=x86_64 upload
-#   make ARCH=aarch64 upload
-#
-# You need write access to the crosvm-testvm storage bucket which is part of the
-# crosvm-packages cloud project. Please browse the storage bucket to find the
-# current latest file version, it can be different than what's in the version file.
-#
-# Note: The locally built image is stored in the same place that testvm.py
-# expects. So the image can be tested directly:
-#
-#   make -C tools/impl/testvm ARCH=x86_64
-#   ./tools/x86vm run
+# You need write access to the crosvm-testvm storage bucket.
 
-# Follow same logic to store artifacts as tools/impl/testvm.py
-TMPDIR?=/tmp
-CROSVM_CACHE_DIR?=$(TMPDIR)
-TARGET=$(CROSVM_CACHE_DIR)/crosvm_tools/$(ARCH)
+TMPDIR           ?= /tmp
+CROSVM_CACHE_DIR ?= $(TMPDIR)
+ARCH             := aarch64
+TARGET           := $(CROSVM_CACHE_DIR)/crosvm_tools/$(ARCH)
+
 $(shell mkdir -p $(TARGET))
 
-ifeq ($(ARCH), x86_64)
-  DEBIAN_ARCH=amd64
-  QEMU_CMD=qemu-system-x86_64 \
-		-cpu host \
-		-enable-kvm
-else ifeq ($(ARCH), aarch64)
-  DEBIAN_ARCH=arm64
-  QEMU_CMD=qemu-system-aarch64 \
-		-cpu cortex-a57 \
-		-M virt \
-		-bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd
-else
-  $(error Only x86_64 or aarch64 are supported)
-endif
+# Use QEMU with the Apple Silicon-compatible cortex-a57 CPU model.
+QEMU_CMD := qemu-system-aarch64 \
+    -cpu cortex-a57 \
+    -M virt \
+    -bios /usr/share/edk2/aarch64/QEMU_EFI.fd
 
-GS_PREFIX=gs://crosvm/testvm
-DEBIAN_URL=https://cloud.debian.org/images/cloud/trixie/daily/latest/
+GS_PREFIX      := gs://crosvm/testvm
+# Fedora Cloud base image for aarch64
+FEDORA_VERSION := 41
+FEDORA_URL     := https://dl.fedoraproject.org/pub/fedora/linux/releases/$(FEDORA_VERSION)/Cloud/aarch64/images
+FEDORA_IMG     := Fedora-Cloud-Base-Generic-$(FEDORA_VERSION)-1.4.aarch64.qcow2
 
-BASE_IMG_NAME=base-$(ARCH)-$(shell cat version).qcow2
-GS_URL=$(GS_PREFIX)/$(BASE_IMG_NAME)
-LOCAL_IMAGE=$(TARGET)/$(BASE_IMG_NAME)
+BASE_IMG_NAME  := base-aarch64-$(shell cat version).qcow2
+GS_URL         := $(GS_PREFIX)/$(BASE_IMG_NAME)
+LOCAL_IMAGE    := $(TARGET)/$(BASE_IMG_NAME)
+
+.PHONY: all clean upload
 
 all: $(LOCAL_IMAGE)
 
 clean:
 	rm -rf $(TARGET)
 
-# Upload images to cloud storage. Do not overwrite existing images, uprev
-# `image_version` instead.
 upload: $(LOCAL_IMAGE)
 	gsutil cp -n $(LOCAL_IMAGE) $(GS_URL)
 
-# Download debian bullseye as base image for the testvm.
-$(TARGET)/debian.qcow2:
-	wget $(DEBIAN_URL)/debian-13-generic-$(DEBIAN_ARCH)-daily.qcow2 -O $@.tmp
+# Download Fedora Cloud aarch64 as base image for the testvm.
+$(TARGET)/fedora.qcow2:
+	wget $(FEDORA_URL)/$(FEDORA_IMG) -O $@.tmp
 	qemu-img resize $@.tmp 8G
 	mv $@.tmp $@
 
-# The cloud init file contains instructions for how to set up the VM when it's
-# first booted.
-$(TARGET)/clould_init.img: cloud_init.yaml
+# Apply cloud-init to configure the VM on first boot.
+$(TARGET)/cloud_init.img: cloud_init.yaml
 	cloud-localds -v $@ $<
 
-# Boot image to run through clould-init process.
-# cloud-init will shut down the VM after initialization. Compress the image
-# afterwards for distribution.
-$(LOCAL_IMAGE): $(TARGET)/clould_init.img $(TARGET)/debian.qcow2
-	cp -f $(TARGET)/debian.qcow2 $@
+# Boot the VM once to let cloud-init configure it, then export the result.
+$(LOCAL_IMAGE): $(TARGET)/fedora.qcow2 $(TARGET)/cloud_init.img
+	cp $(TARGET)/fedora.qcow2 $(TARGET)/disk.qcow2
 	$(QEMU_CMD) \
-		-m 4G -smp 8 \
-		-display none \
-		-serial stdio \
-		-drive file=$@,format=qcow2,index=0,media=disk \
-		-drive file=$(TARGET)/clould_init.img,format=raw,index=1,media=disk
-	qemu-img convert -O qcow2 -c $@ $@-compressed
-	mv -f $@-compressed $@
+	    -m 4G \
+	    -smp 4 \
+	    -nographic \
+	    -drive file=$(TARGET)/disk.qcow2,if=virtio \
+	    -drive file=$(TARGET)/cloud_init.img,if=virtio,format=raw \
+	    -netdev user,id=net0 \
+	    -device virtio-net-pci,netdev=net0
+	qemu-img convert -O qcow2 -c $(TARGET)/disk.qcow2 $(LOCAL_IMAGE)
+	qemu-img info $(LOCAL_IMAGE)

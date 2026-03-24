@@ -38,6 +38,3 @@ sync = { workspace = true }
 thiserror = { workspace = true }
 vm_control_product = { path = "../vendor/generic/vm_control", package = "vm_control_product" }
 vm_memory = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-winapi = "0.3"

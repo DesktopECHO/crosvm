@@ -11,9 +11,5 @@ futures = { version = "0.3" }
 libc = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
-
 base = { workspace = true }
 sync = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-winapi = "*"

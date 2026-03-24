@@ -16,7 +16,3 @@ serde = { workspace = true, features = ["derive"] }
 sync = { workspace = true }
 metrics_events = { workspace = true }
 metrics_product = { path = "../vendor/generic/metrics", package = "metrics_generic" }
-
-[target.'cfg(windows)'.dependencies]
-chrono = { version = "0.4.34", default-features = false, features = ["now"] }
-winapi = { version = "0.3" }
