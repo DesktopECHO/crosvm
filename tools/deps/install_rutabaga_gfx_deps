@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Installs rutabaga_gfx dependencies (minigbm, gfxstream, virglrenderer)
+# Installs rutabaga_gfx dependencies (gfxstream)
 # for native aarch64 on Asahi Fedora Remix.
 #
 # REQUIRED before: cargo build --features=all-aarch64
@@ -18,7 +18,9 @@ sudo dnf install --assumeyes \
     python3-yaml \
     meson \
     ninja-build \
-    gcc-c++
+    gcc-c++ \
+    mesa-libgbm-devel \
+    virglrenderer-devel
 
 DEPS_DIR=$(mktemp -d)
 cd "${DEPS_DIR}"
@@ -27,32 +29,10 @@ cd "${DEPS_DIR}"
 COMMON_PREFIX=/usr
 AARCH64_LIBDIR="${COMMON_PREFIX}/lib64"
 
-# minigbm
-git clone https://chromium.googlesource.com/chromiumos/platform/minigbm
-cd minigbm
-git checkout b1fccad660ff4034f186d68b6474e3139e2dc4db
-
-sudo make install \
-    DESTDIR="${COMMON_PREFIX}" \
-    LIBDIR=/lib64 \
-    INCLUDEDIR=/include \
-    OUT=out
-cd ..
-
 # gfxstream
 git clone https://github.com/google/gfxstream
 cd gfxstream
 git checkout 2ac507720389a84485bfcdac9ff744d92cb0260a
-
-meson setup build --prefix="${COMMON_PREFIX}" --libdir="${AARCH64_LIBDIR}"
-ninja -C build
-sudo ninja -C build install
-cd ..
-
-# virglrenderer
-git clone https://gitlab.freedesktop.org/virgl/virglrenderer.git
-cd virglrenderer
-git checkout 1.0.0
 
 meson setup build --prefix="${COMMON_PREFIX}" --libdir="${AARCH64_LIBDIR}"
 ninja -C build
