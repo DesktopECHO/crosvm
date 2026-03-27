@@ -20,7 +20,9 @@ sudo dnf install --assumeyes \
     ninja-build \
     gcc-c++ \
     mesa-libgbm-devel \
-    virglrenderer-devel
+    virglrenderer-devel \
+    renderdoc-devel \
+    glm-devel
 
 DEPS_DIR=$(mktemp -d)
 cd "${DEPS_DIR}"
